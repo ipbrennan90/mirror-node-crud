@@ -1,0 +1,11 @@
+doctype html
+html(lang="en")
+  body
+    h1 ADD AN AWESOME MOFUCKIN VEHICLE
+    div.carbox
+      form(name="car", action="/cars", method="post")
+        input(type="text", placeholder= "driver", name="driver")
+        input(type="text", placeholder= "make", name="make")
+        input(type="text", placeholder= "model",name="model")
+        input(type="number", placeholder= "year",name="year")
+        input(type="submit", value="Create Car")
