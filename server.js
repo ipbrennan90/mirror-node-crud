@@ -8,22 +8,19 @@ var fs = require("fs"),
 var carAttrs = require("./car.js"),
     carSchema = mongoose.Schema(carAttrs);
 
-
 var Car = mongoose.model('Car', carSchema);
 mongoose.connect('mongodb://localhost/crud_sans_frameworks');
 
-// var allCars;
-//
-// Car.find(function (err, cars) {
-//   if (err) return console.error(err);
-//   allCars = cars
-//   return allCars
-// })
-
-  // console.log(allCars)
+var generateParams = function(data){
+  var params={}
+  var array = data.toString().split(/[&?]/);
+  array.forEach(function(string){
+    tinyArray = string.split("=");
+    params[tinyArray[0]]= tinyArray[1];
+  });
+  return params
+}
 var handleRequest = function(req, res) {
-
-  // redirect users to /cars if they try to hit the homepage
 
   if(req.url === '/favicon.ico'){
     res.end('');
@@ -39,7 +36,6 @@ var handleRequest = function(req, res) {
   }
 
   if (carId === 'cars' && req.method == "GET") {
-
     var index = fs.readFileSync('index.jade', 'utf8');
 
     compiledIndex = jade.compile(index, { pretty: true, filename: 'index.jade' });
@@ -49,35 +45,67 @@ var handleRequest = function(req, res) {
       res.end(rendered)
     })
   } else if(carId === 'cars' && req.method == "POST"){
-    var postParams = {}
+
+    var postParams;
     req.on('data', function(data){
-      var array = data.toString().split("&");
-      array.forEach(function(string){
-        tinyArray = string.split("=");
-        postParams[tinyArray[0]]= tinyArray[1];
-      });
+      postParams = generateParams(data)
+      var car = new Car(postParams)
+      car.save(function(err, car){
+        if (err) return console.error(err);
+        console.log("CAR SAVED!!")
+      })
     });
-    var car = new Car(postParams)
-    car.save(function(err, car){
-      if (err) return console.error(err);
-      console.log("CAR SAVED!!")
-    })
+
+    res.writeHead(301, {Location: 'http://localhost:1337/cars'})
+
+    res.end()
   }else if (carId === 'new') {
     var newTemplate = fs.readFileSync('new.jade', 'utf8');
     compiledNewTemplate = jade.compile(newTemplate, {pretty: true, filename: 'new.jade'});
     res.end(compiledNewTemplate())
+  }else if (carId.match(/\d+/g) !== null && req.method == "POST"){
+    var putParams;
+    req.on('data', function(data){
+      putParams = generateParams(data)
+      updateObject = {}
+      if (putParams["_method"] === "put"){
+        for(var key in putParams){
+          if(putParams[key]) updateObject[key]= putParams[key]
+        }
+
+        console.log(updateObject)
+        Car.update({ _id: carId }, { $set: updateObject}, function(err, car){
+          if(err) return console.error(err)
+          console.log(car)
+        })
+
+      } else {
+        Car.find({_id: carId}).remove().exec()
+      }
+
+
+    })
+
+    res.writeHead(301, {Location: 'http://localhost:1337/cars'})
+
+    res.end()
+
   }else if (carId.match(/\d+/g) !== null && req.method == "GET"){
     var show = fs.readFileSync('show.jade', 'utf8');
-
     compiledShow = jade.compile(show, {pretty:true, filename: 'show.jade'});
-    console.log(carId)
     Car.findOne({_id: carId}, function(err, car){
-      console.log(car)
       var rendered = compiledShow({car: car});
-      res.end(rendered)
+      res.end(rendered);
+    })
+
+  }else if(carId === 'edit'){
+    var edit = fs.readFileSync('edit.jade', 'utf8');
+    compiledEdit = jade.compile(edit, {pretty:true, filename: 'show.jade'});
+    Car.findOne({_id: urlArray[urlArray.length-2]}, function(err, car){
+      var rendered = compiledEdit({car: car});
+      res.end(rendered);
     })
   }else {
-    // Your code might go here (or it might not)
     res.writeHead(200);
     res.end('A new programming journey awaits');
   }

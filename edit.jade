@@ -1,0 +1,12 @@
+doctype html
+html(lang="en")
+  body
+    h1 Edit your baby
+    div.carbox
+      form(name="car", action="/cars/"+car.id, method="post")
+        input(type="hidden" name="_method" value="put")
+        input(type="text", placeholder=car.driver, name="driver")
+        input(type="number", placeholder=car.year,name="year")
+        input(type="text", placeholder=car.make, name="make")
+        input(type="text", placeholder=car.model,name="model")
+        input(type="submit", value="Edit Car")

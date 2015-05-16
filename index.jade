@@ -11,3 +11,9 @@ html(lang="en")
       for car in cars
         li= car.driver + ' in a ' + car.year + ' ' + car.make + ' ' + car.model
           a(href='/cars/'+car.id) car
+
+          a(href='/cars/'+car.id+'/edit') Edit
+
+          form(name="car", action="/cars/" + car.id, method="post")
+            input(type="hidden" name="_method" value="delete")
+            input(type="submit", value="Delete")
