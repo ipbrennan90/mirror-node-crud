@@ -33,7 +33,7 @@ var pageDisplay = function(res, fileName, queryObject, displayName){
       console.log(queryObject)
       Car.find(queryObject, function(err, car){
         console.log(car)
-        res.end(compiledFile({car:car}))
+        res.end(compiledFile({car:car[0]}))
       })
     }
   })
