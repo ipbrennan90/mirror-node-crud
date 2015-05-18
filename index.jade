@@ -2,18 +2,21 @@ doctype html
 html(lang="en")
   body
     h1= headline
-
+    h1 ADD AN AWESOME VEHICLE
+    div.carbox
+      form(name="car", action="/cars", method="post")
+        input(type="text", placeholder= "driver", name="driver")
+        input(type="number", placeholder= "year",name="year")
+        input(type="text", placeholder= "make", name="make")
+        input(type="text", placeholder= "model",name="model")
+        input(type="submit", value="Create Car")
     h4 Here is a listing of the current cars we have:
-
-    a(href='/cars/new') New Car
 
     ul
       for car in cars
         li= car.driver + ' in a ' + car.year + ' ' + car.make + ' ' + car.model
-          a(href='/cars/'+car.id) car
+          a(href='/cars/'+car.id)   car
 
-          a(href='/cars/'+car.id+'/edit') Edit
+          a(href='/cars/'+car.id+'/edit')   Edit
 
-          form(name="car", action="/cars/" + car.id, method="post")
-            input(type="hidden" name="_method" value="delete")
-            input(type="submit", value="Delete")
+          a(href='/cars/'+car.id+'/delete')   Delete
