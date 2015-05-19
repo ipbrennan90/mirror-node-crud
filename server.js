@@ -57,7 +57,7 @@ var reqFunctions = {
       reqFunctions.redirect(res);
     }
   },
-  
+
   "cars":{
     func: function(req, res){
       if(req.method == "GET") pageDisplay(res, 'index.jade', {}, 'cars')
@@ -112,7 +112,6 @@ var reqFunctions = {
       })
     }
   }
-
 };
 
 
