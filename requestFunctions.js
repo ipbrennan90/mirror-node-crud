@@ -12,7 +12,7 @@ Routes.post = function post(routePath, request, response) {
   Routes.postHandlers[routePath] = handler;
 };
 
-Routes.init = function init(routes) {
+Routes.init = function init() {
   Routes.get('index', Routes.index);
   Routes.get('redirect', Routes.redirect);
   Routes.get('', Routes.index);

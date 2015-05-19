@@ -3,13 +3,13 @@ var carAttrs = require('./models/car.js'),
     http = require('http'),
     mongoose = require('mongoose'),
     jade = require('jade'),
-    reqFunctions = require('./requestFunctions'),
+    Routes = require('./requestFunctions'),
     url = require('url');
 
 var carSchema = mongoose.Schema(carAttrs),
     Car = mongoose.model('Car', carSchema);
 
-    // console.log(reqFunctions)
+    // console.log(Routes)
 
 // mongoose.connect('mongodb://localhost/crud_sans_frameworks');
 
@@ -61,9 +61,9 @@ Server.handleRequest = function handleRequest(req, res) {
   console.log('Attempting to reach route: "', route, '"', req.method);
 
   if (req.method == 'GET') {
-    handler = reqFunctions.getRoute(route);
+    handler = Routes.getRoute(route);
   } else if (req.method == 'POST') {
-    handler = reqFunctions.postRoute(route);
+    handler = Routes.postRoute(route);
   }
 
   console.log('Handler for request:', handler);
@@ -80,10 +80,11 @@ Server.handleRequest = function handleRequest(req, res) {
     console.log('Something went wrong - log it here.');
     console.log(ex, ex.stack);
   }
-  // res.end(reqFunctions);
+  // res.end(Routes);
 };
 
 Server.start = function start(port) {
+  Routes.init();
   var server = http.createServer(Server.handleRequest);
   server.listen(port);
 };
