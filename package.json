@@ -7,6 +7,16 @@
     "jade": "*",
     "mongodb": "*",
     "mongoose": "*",
-    "nodemon": "*"
+    "nodemon": "^1.3.7"
+  },
+  "devDependencies": {
+    "jasmine-node": "^1.14.5",
+    "jshint": "^2.7.0"
+  },
+  "script": {
+    "run": "./node_modules/nodemon/bin/nodemon.js bin/server",
+    "test": "npm run jasmine",
+    "jshint": "node node_modules/jshint/bin/jshint src && node node_modules/jshint/bin/jshint spec",
+    "jasmine": "jasmine-node --captureExceptions  ./spec"
   }
 }

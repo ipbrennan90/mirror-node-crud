@@ -1,127 +1,90 @@
-var fs = require("fs"),
-    http = require("http"),
-    mongoose = require("mongoose"),
-    jade = require('jade');
-    url = require('url')
+var carAttrs = require('./models/car.js'),
+    fs = require('fs'),
+    http = require('http'),
+    mongoose = require('mongoose'),
+    jade = require('jade'),
+    Routes = require('./requestFunctions'),
+    url = require('url');
 
-var carAttrs = require("./car.js"),
-    carSchema = mongoose.Schema(carAttrs);
+var carSchema = mongoose.Schema(carAttrs),
+    Car = mongoose.model('Car', carSchema);
 
-var Car = mongoose.model('Car', carSchema);
-mongoose.connect('mongodb://localhost/crud_sans_frameworks');
+    // console.log(Routes)
 
-var generateParams = function(data){
+// mongoose.connect('mongodb://localhost/crud_sans_frameworks');
+
+var Server = module.exports;
+
+Server.generateParams = function generateParams(data){
   var params={}
   var array = data.toString().split(/[&?]/);
   array.forEach(function(string){
-    tinyArray = string.split("=");
+    tinyArray = string.split('=');
     params[tinyArray[0]]= tinyArray[1];
   });
   return params
-}
+};
 
-var pageDisplay = function(res, fileName, queryObject, displayName){
+Server.pageDisplay = function pageDisplay(res, fileName, queryObject, displayName){
+  console.log(fileName);
   fs.readFile(fileName, 'utf8', function(err, data){
     if(err) throw err;
     compiledFile = jade.compile(data, {pretty:true, filename: fileName});
     if(displayName === 'cars'){
-      Car.find(queryObject, function(err, cars){
-        res.end(compiledFile({cars:cars}))
-      })
+      // Car.find(queryObject, function(err, cars){
+      //   res.end(compiledFile({cars:cars}))
+      // })
+      res.end(compiledFile({cars: []}));
     }else{
-      Car.find(queryObject, function(err, car){
-        res.end(compiledFile({car:car[0]}))
-      })
+      // Car.find(queryObject, function(err, car){
+      //   res.end(compiledFile({car:car[0]}))
+      // })
+      res.end(compiledFile({car: {}}));
     }
-  })
-}
+  });
+};
 
-var urlArray = function(req){
-  return req.url.split("/")
-}
+Server.urlArray = function urlArray(req){
+  return req.url.split('/');
+};
 
-var reqId = function(req){
-  array = urlArray(req)
-  if(array[array.length-1].match(/\d+/g) !== null) return 'carId'
-  return array[array.length-1]
-}
+Server.reqId = function reqId(req){
+  array = Server.urlArray(req);
+  if(array[array.length-1].match(/\d+/g) !== null) return 'carId';
+  return array[array.length-1];
+};
 
-var reqFunctions = {
-  redirect: function(res){
-    res.writeHead(301, {Location: 'http://localhost:1337/cars'});
-    res.end();
-  },
+Server.handleRequest = function handleRequest(req, res) {
+  var route = Server.reqId(req),
+      handler;
 
-  "/favicon.ico":{
-    func: function(res){
-      reqFunctions.redirect(res);
-    }
-  },
+  console.log('Attempting to reach route: "', route, '"', req.method);
 
-  "cars":{
-    func: function(req, res){
-      if(req.method == "GET") pageDisplay(res, 'index.jade', {}, 'cars')
-      var postParams;
-      req.on('data', function(data){
-        postParams = generateParams(data);
-        var car = new Car(postParams);
-        car.save(function(err, car){
-          if (err) return console.error(err);
-          reqFunctions.redirect(res);
-        })
-      });
-
-    }
-  },
-
-  'carId':{
-    func: function(req,res){
-      var id = urlArray(req)[urlArray(req).length-1];
-      if(req.method === "GET") pageDisplay(res, 'show.jade', {_id: id }, 'car');
-      var putParams;
-      req.on('data', function(data){
-        putParams = generateParams(data);
-        updateObject = {};
-
-        for(var key in putParams){
-          if(putParams[key]) updateObject[key]= putParams[key];
-        }
-
-        Car.update({ _id: id }, { $set: updateObject}, function(err, car){
-          if(err) return console.error(err);
-        })
-        reqFunctions.redirect(res);
-      })
-    }
-  },
-
-  'delete':{
-    func: function(req, res){
-      Car.find({_id: urlArray(req)[urlArray(req).length-2]}).remove().exec();
-      reqFunctions.redirect(res);
-    }
-  },
-
-  'edit':{
-    func: function(req, res){
-      var edit = fs.readFileSync('edit.jade', 'utf8');
-      compiledEdit = jade.compile(edit, {pretty:true, filename: 'show.jade'});
-      Car.findOne({_id: urlArray(req)[urlArray(req).length-2]}, function(err, car){
-        var rendered = compiledEdit({car: car});
-        res.end(rendered);
-      })
-    }
+  if (req.method == 'GET') {
+    handler = Routes.getRoute(route);
+  } else if (req.method == 'POST') {
+    handler = Routes.postRoute(route);
   }
+
+  console.log('Handler for request:', handler);
+
+  try {
+    if (handler) {
+      console.log('Dispatching to handler');
+      return handler(req, res);
+    } else {
+      res.writeHead(200);
+      res.end('No route matched your search');
+    }
+  } catch (ex) {
+    console.log('Something went wrong - log it here.');
+    console.log(ex, ex.stack);
+  }
+  // res.end(Routes);
 };
 
-
-var handleRequest = function(req, res) {
-
-  if(reqFunctions.hasOwnProperty(reqId(req))) return reqFunctions[reqId(req)].func(req, res);
-  res.writeHead(200);
-  res.end('A new programming journey awaits');
-
+Server.start = function start(port) {
+  Routes.init();
+  var server = http.createServer(Server.handleRequest);
+  server.listen(port);
 };
-
-var server = http.createServer(handleRequest);
-server.listen(1337);
